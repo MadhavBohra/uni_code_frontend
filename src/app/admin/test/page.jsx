@@ -4,7 +4,7 @@ import styles from './test.module.css';
 const page = () => {
     return (
         <div className={styles.background}>
-            <div class={styles.container}>
+            <div className={styles.container}>
                 <h1>Test Activity</h1>
                 <table>
                     <thead>
