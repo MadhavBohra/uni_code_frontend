@@ -65,3 +65,27 @@
   font-size: 0.9rem;
   color: green;
 }
+
+.loaderContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* Full height for the loader */
+  background: rgba(255, 255, 255, 0.8); /* Optional background */
+}
+
+.loader {
+  border: 8px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #0d6efd; /* Change to your preferred color */
+  border-radius: 50%;
+  width: 60px; /* Size of the loader */
+  height: 60px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

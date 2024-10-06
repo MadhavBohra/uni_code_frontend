@@ -1,46 +1,213 @@
-.background{
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(120deg, #2980b9, #8e44ad);
-    height: 100vh;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #333;
+  padding: 10px 20px;
+  color: white;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  position: fixed; /* Fix the navbar at the top */
+  top: 0; /* Ensure it stays at the top */
+  left: 0;
+  z-index: 1000; /* Make sure it's on top */
 }
+
+/* Add a margin to the background to account for the navbar */
+.background {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(120deg, #2980b9, #8e44ad);
+  min-height: 100vh; /* Ensure it takes full viewport height */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 60px; /* Adjust to navbar height */
+}
+
+.navLeft{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.navLeft h1 {
+  margin: 10px;
+  font-size: 24px;
+}
+
+.navCenter {
+  display: flex;
+  gap: 20px;
+}
+
+.navRight {
+  display: flex;
+}
+
+.navLink {
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+  padding: 10px 15px;
+  transition: background-color 0.3s;
+}
+
+.navLink:hover {
+  background-color: #555;
+  border-radius: 5px;
+}
+
+.logoutBtn {
+  background-color: #f44336;
+  padding: 10px 20px;
+  border-radius: 5px;
+  padding: 10px 20px;
+  margin: 10px;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  border: none;
+}
+
+.logoutBtn:hover {
+  background-color: #d32f2f;
+  cursor: pointer;
+}
+
+
 .container {
   background-color: rgba(255, 255, 255, 0.774);
   padding: 2rem;
   border-radius: 15px;
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-  width: 30%;
-  justify-content: center;
-  align-items: center;
+  width: 90vw;
+  display: flex; /* Use flexbox */
+  flex-direction: column;
+  justify-content: space-around;
+  /* align-items: stretch; Ensures both sides stretch to the same height */
+  height: 80vh; /* Remove fixed height */
+  margin: 2%;
 }
+
+.containerLeft,
+.containerRight {
+  width: 48%; /* Ensure equal width */
+  margin: 2%;
+  padding-top: 2%;
+}
+
+.containerLeft{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  padding-top: 0%;
+  margin-top: 0%;
+  margin-bottom: 0%;
+}
+
+.containerRight {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+
+
 .card {
   background-color: white;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 20px;
   width: 100%;
-  margin-bottom: 10px;
-  margin-top: 10px;
   text-align: center;
   border-radius: 10px;
   justify-content: center;
   align-items: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
+
+.card h2{
+  margin: 5px;
+}
+
 .container h1 {
   color: #333;
   text-align: center;
+  margin-bottom: 10px;
 }
 .btn {
   display: inline-block;
   padding: 10px 20px;
   margin: 10px;
-  background-color: #007bff;
+  background-color: green;
   color: white;
   text-decoration: none;
   border-radius: 5px;
+  border: none;
 }
 .btn:hover {
-  background-color: #0056b3;
+  background-color: rgba(0, 128, 0, 0.719);
+}
+
+.line{
+  width: 2px;
+  display: flex;
+  background-color: black;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+}
+
+.detailRow {
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modalContent {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+  width: 300px;
+}
+
+.inputField {
+  margin: 1rem 0;
+  padding: 0.5rem;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.btnClose {
+  background-color: #d32f2f;
+  color: white;
+  margin-left: 10px;
+}
+
+.btnClose:hover {
+  background-color: #c62828;
 }
