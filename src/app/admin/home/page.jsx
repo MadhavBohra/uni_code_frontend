@@ -2,21 +2,46 @@
 import React, { useState, useEffect } from 'react';
 import styles from './home.module.css';
 import { useRouter } from 'next/navigation';
+import Navbar from '@/app/components/Navbar';
+import ConfirmationModal from '@/app/components/ConfirmationModal/ConfirmationModal';
+import { useTestContext } from '@/app/context/TestContext'; // Make sure this path is correct
 
 const AdminDashboard = () => {
-  const [showRoomModal, setShowRoomModal] = useState(false); // For modal visibility
-  const [testTimer, setTestTimer] = useState({ hours: '', minutes: '' }); // For test timer
-  const [testId, setTestId] = useState(null); // State for storing test ID
-  const [loading, setLoading] = useState(true); // Loading state
-  const [questionPaper, setQuestionPaper] = useState(null); // State for storing the question paper file
-  const [roomNumbers, setRoomNumbers] = useState([]); // State for storing room numbers
-  const [newRoomNumber, setNewRoomNumber] = useState(''); // State for new room number input
-
-  
+  const [showRoomModal, setShowRoomModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [questionPaper, setQuestionPaper] = useState(null);
+  const [roomNumbers, setRoomNumbers] = useState([]);
+  const [newRoomNumber, setNewRoomNumber] = useState('');
+  const [studentsList, setStudentsList] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { setTestStarted, testStarted } = useTestContext(); // Assuming testStarted is provided by context
   const router = useRouter();
 
+  const handleStartTest = async () => {
+    try {
+      const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+      if (!token) {
+        handleLogout(); // Log out if no token is found
+        return;
+      }
+      const response = await fetch('http://localhost:8080/admin/start-test', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.split('=')[1]}`, // Send token in the headers
+        }
+      });
 
-  const [studentsList, setStudentsList] = useState(null); // State for storing the students list file
+      if (!response.ok) {
+        throw new Error('Failed to start the test');
+      }
+
+      setTestStarted(true);
+      console.log('Test started');
+    } catch (error) {
+      console.error('Error starting the test:', error);
+    }
+  };
+
 
   const handleStudentsListChange = (e) => {
     setStudentsList(e.target.files[0]); // Set the selected students list file
@@ -36,7 +61,6 @@ const AdminDashboard = () => {
 
     const formData = new FormData();
     formData.append('file', studentsList); // Append the students list file
-    formData.append('testId', testId); // Append the test ID
 
     try {
       const response = await fetch('http://localhost:8080/admin/upload-student-list', {
@@ -93,7 +117,12 @@ const AdminDashboard = () => {
         }
 
         const testData = await testRes.json();
-        setTestId(testData.testId); // Set the test ID from the response
+        console.log(testData.Status);
+        if (testData.Status === "SETTING_UP") {
+          setTestStarted(false);
+        } else if (testData.Status === "ONGOING") {
+          setTestStarted(true);
+        }
       } catch (error) {
         console.error(error);
         handleLogout(); // Log out if there's an error
@@ -105,28 +134,19 @@ const AdminDashboard = () => {
     validateTokenAndFetchTestId(); // Call the function
   }, [router]);
 
-  const handleLogout = () => {
-    // Clear the token
-    document.cookie = 'token=; Max-Age=0; path=/'; // Clear the token
-    router.push('/admin'); // Redirect to the login page
-  };
+  useEffect(() => {
+    if (testStarted) {
+      router.push('/admin/test'); // Adjust this route to your actual test page path
+    }
+  }, [testStarted, router]);
+
+
 
   const toggleRoomModal = () => {
     setShowRoomModal(!showRoomModal); // Toggle modal visibility
   };
 
-  const handleTimerChange = (e) => {
-    const { name, value } = e.target;
-    setTestTimer((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
 
-  const saveTimer = () => {
-    // Save test timer logic (can be implemented as needed)
-    alert(`Test timer set to ${testTimer.hours} hours and ${testTimer.minutes} minutes.`);
-  };
 
   const handleFileChange = (e) => {
     setQuestionPaper(e.target.files[0]); // Set the selected file
@@ -146,7 +166,6 @@ const AdminDashboard = () => {
 
     const formData = new FormData();
     formData.append('file', questionPaper); // Append the question paper file
-    formData.append('testId', testId); // Append the test ID
 
     try {
       const response = await fetch('http://localhost:8080/admin/upload-question-paper', {
@@ -191,16 +210,7 @@ const AdminDashboard = () => {
 
   return (
     <>
-      <nav className={styles.navbar}>
-        <div className={styles.navLeft}>
-          <h1>Admin Dashboard</h1>
-          <a href="testSetup" className={styles.navLink}>Test Setup</a>
-          <a href="testHistory" className={styles.navLink}>Test History</a>
-        </div>
-        <div className={styles.navRight}>
-          <button className={styles.logoutBtn} onClick={handleLogout}>Logout</button>
-        </div>
-      </nav>
+      <Navbar></Navbar>
 
       <div className={styles.background}>
         <div className={styles.container}>
@@ -238,7 +248,6 @@ const AdminDashboard = () => {
               <div style={{ backgroundColor: "white", padding: "10px", borderRadius: "10px" }}>
                 <h2>Test Details:</h2>
                 <div className={styles.detailRow}>
-                  <p>Test ID: {testId}</p> {/* Display the fetched Test ID */}
                 </div>
                 <div className={styles.detailRow}>
                   <p>See Test Paper: </p>
@@ -256,7 +265,19 @@ const AdminDashboard = () => {
               <div className={styles.card}>
                 <h2>Start Test</h2>
                 <p style={{ color: "red" }}>Once You Click on the Start Test there is NO GOING BACK:</p>
-                <a href="addLabNumbers" className={styles.btn} style={{ background: "red" }}>START TEST</a>
+                <button 
+                  className={styles.btn} 
+                  style={{ background: "red" }} 
+                  onClick={() => setIsModalOpen(true)} // Open modal on click
+                >
+                  START TEST
+                </button>
+
+                <ConfirmationModal 
+                  isOpen={isModalOpen} 
+                  onClose={() => setIsModalOpen(false)} // Close modal
+                  onConfirm={handleStartTest} // Confirm function
+                />
               </div>
             </div>
           </div>
