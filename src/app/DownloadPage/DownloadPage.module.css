@@ -1,0 +1,52 @@
+.background {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(120deg, #2980b9, #8e44ad);
+    min-height: 100vh; /* Ensure it takes full viewport height */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding-top: 60px; /* Adjust to navbar height */
+  }
+  
+    
+  .container {
+    background-color: rgba(255, 255, 255, 0.774);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    width: 30vw;
+    display: flex; /* Use flexbox */
+    flex-direction: column;
+    justify-content: center;
+    /* align-items: stretch; Ensures both sides stretch to the same height */
+    height: 30vh; /* Remove fixed height */
+    margin: 2%;
+  }
+  
+.container h1 {
+    font-size: 24px;
+    color: #333;
+  }
+  
+.container p {
+    margin: 20px 0;
+    font-size: 1.2em;
+    color: #666;
+  }
+  
+  .downloadButton {
+    padding: 10px 20px;
+    font-size: 1em;
+    color: white;
+    background-color: #0070f3;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .downloadButton:hover {
+    background-color: #005bb5;
+  }

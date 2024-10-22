@@ -1,19 +1,34 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'; // Import useRouter from next/navigation
 import styles from './LogInPage.module.css';
 
 const LogIn = () => {
   const [formData, setFormData] = useState({
-    bitsId: '',
-    name: '',
+    studentId: '',
+    studentName: '',
     roomNumber: '',
-    systemNumber: ''
+    seatNumber: ''
   });
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(true); // Add loading state
 
-  // Handle change with explicit typing for input and select elements
+  const router = useRouter(); // Initialize the useRouter hook
+
+  // Check if token exists on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('StudentauthToken');
+    if (token) {
+      // Redirect to download page if token is found
+      router.push('/DownloadPage');
+    } else {
+      setLoading(false); // If no token is found, stop loading
+    }
+  }, [router]);
+
+  // Handle change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
@@ -21,17 +36,23 @@ const LogIn = () => {
     });
   };
 
-  // Handle form submission with explicit typing
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
+      const params = new URLSearchParams();
+      params.append('studentId', formData.studentId);
+      params.append('studentName', formData.studentName);
+      params.append('roomNumber', formData.roomNumber);
+      params.append('seatNumber', formData.seatNumber);
+
       const response = await fetch('http://localhost:8080/api/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify(formData),
+        body: params.toString(),
       });
 
       if (!response.ok) {
@@ -40,13 +61,20 @@ const LogIn = () => {
 
       const data = await response.json();
 
-      // Handle successful login (e.g., store token, redirect, etc.)
-      setSuccessMessage('Login successful!');
-      setErrorMessage('');
-      console.log('Login successful:', data);
+      // Check if the token is present in the response
+      if (data.token) {
+        // Save token to localStorage
+        localStorage.setItem('StudentauthToken', data.token);
 
-      // You might want to redirect the user to another page or clear the form here.
-      // Example: window.location.href = '/dashboard';
+        // Display success message
+        setSuccessMessage('Login successful!');
+        setErrorMessage('');
+
+        // Redirect the user to the download question paper page using useRouter
+        router.push('/DownloadPage');
+      } else {
+        throw new Error('No token found');
+      }
     } catch (error) {
       setErrorMessage('Login failed. Please try again.');
       setSuccessMessage('');
@@ -54,29 +82,38 @@ const LogIn = () => {
     }
   };
 
+  if(loading)
+  {
+    return(
+      <>
+        <p>Loading....</p>
+      </>
+    )
+  }
+  
   return (
     <div className={styles.background}>
       <div className={styles.container}>
         <h2>Login</h2>
 
         <form id={styles.loginForm} onSubmit={handleSubmit}>
-          <label htmlFor="bitsId">BITS ID:</label>
+          <label htmlFor="studentId">Student ID:</label>
           <input
             type="text"
-            id="bitsId"
-            name="bitsId"
-            value={formData.bitsId}
+            id="studentId"
+            name="studentId"
+            value={formData.studentId}
             onChange={handleChange}
-            placeholder="Enter your BITS ID"
+            placeholder="Enter your Student ID"
             required
           />
 
-          <label htmlFor="name">Name:</label>
+          <label htmlFor="studentName">Name:</label>
           <input
             type="text"
-            id="name"
-            name="name"
-            value={formData.name}
+            id="studentName"
+            name="studentName"
+            value={formData.studentName}
             onChange={handleChange}
             placeholder="Enter your Name"
             required
@@ -97,14 +134,14 @@ const LogIn = () => {
             <option value="B202">B202</option>
           </select>
 
-          <label htmlFor="systemNumber">System Number:</label>
+          <label htmlFor="seatNumber">Seat Number:</label>
           <input
             type="number"
-            id="systemNumber"
-            name="systemNumber"
-            value={formData.systemNumber}
+            id="seatNumber"
+            name="seatNumber"
+            value={formData.seatNumber}
             onChange={handleChange}
-            placeholder="Enter your System Number"
+            placeholder="Enter your Seat Number"
             required
           />
 

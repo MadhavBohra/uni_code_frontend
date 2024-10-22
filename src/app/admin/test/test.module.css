@@ -19,6 +19,31 @@
     overflow: auto;
     margin-top: 6%;
 }
+
+/* For WebKit Browsers (Chrome, Safari, Edge) */
+.container::-webkit-scrollbar {
+    width: 8px;  /* Width of the scrollbar */
+}
+
+.container::-webkit-scrollbar-thumb {
+    background: #888;  /* Color of the scrollbar thumb */
+    border-radius: 10px;  /* Rounded corners */
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+    background: #555;  /* Color when hovering */
+}
+
+/* For Firefox */
+.container {
+    scrollbar-width: thin;  /* Makes the scrollbar thinner */
+    scrollbar-color: #888 white;  /* Thumb color and track color */
+}
+
+/* Optional: for the hover effect in Firefox */
+.container:hover {
+    scrollbar-color: #555 white;  /* Change the thumb color on hover */
+}
 .container h1 {
     text-align: center;
     color: #333;

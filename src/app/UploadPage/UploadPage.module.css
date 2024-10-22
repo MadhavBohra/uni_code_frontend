@@ -11,7 +11,7 @@
   padding: 2rem;
   border-radius: 15px;
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-  width: 30%;
+  width: 60%;
 }
 
 .container  h2 {
@@ -58,9 +58,34 @@
   background-color: #3498db;
 }
 
+.subContainer{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+
 .message {
   text-align: center;
   margin-top: 1rem;
   font-size: 0.9rem;
   color: green;
+}
+
+.uploadButton{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.card {
+  background-color: rgba(255, 255, 255, 0.521);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  width: 100%;
+  text-align: center;
+  border-radius: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin: 20px;
 }

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './home.module.css';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/app/components/Navbar';
+import Navbar from '@/app/components/AdminNavbar/Navbar';
 import ConfirmationModal from '@/app/components/ConfirmationModal/ConfirmationModal';
 import { useTestContext } from '@/app/context/TestContext'; // Make sure this path is correct
 

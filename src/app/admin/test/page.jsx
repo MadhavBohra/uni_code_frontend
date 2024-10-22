@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./test.module.css";
-import Navbar from "@/app/components/Navbar";
+import Navbar from "@/app/components/AdminNavbar/Navbar";
 import { useTestContext } from "@/app/context/TestContext"; // Make sure this path is correct
 
 const TestPage = () => {
@@ -11,6 +11,7 @@ const TestPage = () => {
   const [roomNumbers, setRoomNumbers] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("login-time");
+  const [studentData, setStudentData] = useState([]); // State to hold student data
 
   const statusOptions = ["login-time", "download-time", "upload-time", "submit-time"];
 
@@ -20,6 +21,7 @@ const TestPage = () => {
       // Redirect to the home page if the test has not started
       router.push("/admin/home"); // Adjust the path as necessary
     }
+
     const token = document.cookie.split('; ').find(row => row.startsWith('token='));
     if (!token) {
       handleLogout(); // Log out if no token is found
@@ -28,18 +30,16 @@ const TestPage = () => {
 
     // Fetch room numbers from the backend
     fetch("http://localhost:8080/admin/room-numbers", {
-      method: "GET", // Specify the request method
+      method: "GET",
       headers: {
-        "Content-Type": "application/json", // Set the content type
+        "Content-Type": "application/json",
         "Authorization": `Bearer ${token.split('=')[1]}` // Add the authorization header with the token
       }
     })
       .then((res) => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
-          console.warn(res);
         }
-        console.warn(res);
         return res.json();
       })
       .then((data) => {
@@ -47,6 +47,49 @@ const TestPage = () => {
       })
       .catch((err) => console.error("Error fetching room numbers:", err));
   }, [testStarted, router]);
+
+  useEffect(() => {
+    // Function to fetch student data based on room selection and status
+    const fetchStudentData = () => {
+      const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+      if (!token) return;
+
+      let apiUrl = `http://localhost:8080/admin/${selectedStatus}`;
+      if (selectedRoom) {
+        apiUrl += `/${selectedRoom}`; // Append room query if a room is selected
+      }
+
+      fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token.split('=')[1]}`
+        }
+      })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          setStudentData(data); // Assuming API returns { students: [...] }
+          console.log(data);
+        })
+        .catch((err) => console.error("Error fetching student data:", err));
+    };
+
+    // Call fetchStudentData immediately and then every 30 seconds
+    fetchStudentData(); // Initial call
+
+    const interval = setInterval(() => {
+      fetchStudentData(); // Fetch every 30 seconds
+    }, 30000); // 30000 ms = 30 seconds
+
+    // Clean up the interval on component unmount
+    return () => clearInterval(interval);
+
+  }, [selectedRoom, selectedStatus]); // Re-fetch data whenever room or status changes
 
   const handleRoomChange = (e) => {
     setSelectedRoom(e.target.value);
@@ -58,7 +101,7 @@ const TestPage = () => {
 
   return (
     <>
-      <Navbar></Navbar>
+      <Navbar />
       <div className={styles.background}>
         <div className={styles.container}>
           <h1>Test Activity</h1>
@@ -70,12 +113,12 @@ const TestPage = () => {
               value={selectedRoom}
               onChange={handleRoomChange}
             >
-              <option value="" disabled>Select Room</option>
-              {/* {roomNumbers.map((room) => (
+              <option value="">All Rooms</option>
+              {roomNumbers.map((room) => (
                 <option key={room} value={room}>
                   Room {room}
                 </option>
-              ))} */}
+              ))}
             </select>
 
             <label htmlFor="statusDropdown">Select Status:</label>
@@ -99,23 +142,36 @@ const TestPage = () => {
                 <th>Student Name</th>
                 <th>Student ID</th>
                 <th>Status</th>
-                <th>Time Remaining</th>
+                <th>Time</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>John Doe</td>
-                <td>12345</td>
-                <td>Taking Test</td>
-                <td>45 minutes</td>
-              </tr>
-              {/* Other rows go here */}
-              <tr>
-                <td>Elijah Bell</td>
-                <td>68902</td>
-                <td>Finished</td>
-                <td>N/A</td>
-              </tr>
+              {studentData.length > 0 ? (
+                studentData.map((student) => (
+                  <tr key={student.student_id}>
+                    <td>{student.student_name}</td>
+                    <td>{student.student_id}</td>
+                    <td>
+                      {student.login_status ? (
+                        <span style={{ color: 'green' }}>&#10003;</span> // Green tick
+                      ) : (
+                        <span style={{ color: 'red' }}>&#10007;</span>   // Red cross
+                      )}
+                    </td>
+                    <td>
+                      {new Date(student.login_time).toLocaleTimeString('en-GB', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        second: '2-digit' 
+                      })}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4">No data available</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
