@@ -1,5 +1,4 @@
 "use client"
-
 import React, { useEffect, useState } from 'react';
 import styles from './UploadPage.module.css';
 import Navbar from '../components/StudentNavbar/Navbar';
@@ -7,27 +6,52 @@ import { useRouter } from 'next/navigation';
 
 
 const UploadPage = () => {
-  const [idNumber, setIdNumber] = useState('');
-  const [labNumber, setLabNumber] = useState('');
   const [file, setFile] = useState<File | null>(null);
-  const [commonPassword, setCommonPassword] = useState('');
-  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [commonPassword, setCommonPassword] = useState('use client');
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const [Loading,setLoading] = useState(true);
-
+  const [Loading, setLoading] = useState(true);
+  const [isTestOngoing, setIsTestOngoing] = useState(true);
 
   const router = useRouter();
 
-    useEffect(() => {
-      const token = localStorage.getItem('StudentauthToken');
-      if (!token) {
-        // Redirect to download page if token is found
-        router.push('/LogInPage');
-      } else {
-        setLoading(false); // If no token is found, stop loading
-      }
-    }, [router]);
+  useEffect(() => {
+    const token = localStorage.getItem('StudentauthToken');
+    if (!token) {
+      router.push('/LogInPage'); // Redirect to login if no token is found
+      return;
+    }
 
+    setLoading(false); // Stop loading if token exists
+
+    // Periodically check test status
+    const intervalId = setInterval(() => {
+      fetchTestStatus();
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on component unmount
+  }, [router]);
+  const fetchTestStatus = async () => {
+    try {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/api/get-test-status`, {
+        method: 'GET',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const testEnded = data.testStatus === 'ENDED';
+        setIsTestOngoing(!testEnded);
+        console.log(isTestOngoing);
+
+        if (testEnded) {
+          router.push('/EndTestPage'); // Redirect if test has ended
+        }
+      } else {
+        console.error('Failed to fetch test status:', response.status);
+      }
+    } catch (error) {
+      console.error('Error checking test status:', error);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -41,28 +65,25 @@ const UploadPage = () => {
       alert('No file selected. Please choose a file before uploading.');
       return;
     }
-  
-    // Prepare the form data
+
     const formData = new FormData();
     formData.append('file', file);
-  
+
     try {
-      // Get the token from localStorage (ensure it exists)
       const token = localStorage.getItem('StudentauthToken');
       if (!token) {
         alert('User is not authenticated. Please log in.');
         return;
       }
-  
-      // Send the request with the Bearer token
-      const response = await fetch('http://localhost:8080/api/upload-answer', {
+
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/api/upload-answer`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,  // Add Bearer token to the headers
+          'Authorization': `Bearer ${token}`,
         },
-        body: formData, // The form data with the file
+        body: formData,
       });
-  
+
       if (response.ok) {
         alert('File uploaded successfully.');
       } else {
@@ -77,55 +98,45 @@ const UploadPage = () => {
 
   const handleDownload = async () => {
     try {
-        // Get the token from localStorage (ensure it exists)
-        const token = localStorage.getItem('StudentauthToken');
-        if (!token) {
-            alert('User is not authenticated. Please log in.');
-            return;
-        }
+      const token = localStorage.getItem('StudentauthToken');
+      if (!token) {
+        alert('User is not authenticated. Please log in.');
+        return;
+      }
 
-        // Send the request with the Bearer token
-        const response = await fetch('http://localhost:8080/api/download-answer', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,  // Add Bearer token to the headers
-            },
-        });
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/api/download-answer`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
-        if (response.ok) {
-            // Create a blob from the response
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            
-            // Create a link element
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'answer_file.zip'; // Set the desired file name here
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
 
-            // Append to the document and trigger the download
-            document.body.appendChild(a);
-            a.click();
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'answer_file.zip';
 
-            // Clean up and remove the link
-            a.remove();
-            window.URL.revokeObjectURL(url);
-            alert('File downloaded successfully.');
-        } else {
-            const errorData = await response.json();
-            alert(`Failed to download file: ${errorData.message}`);
-        }
+        document.body.appendChild(a);
+        a.click();
+
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        alert('File downloaded successfully.');
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to download file: ${errorData.message}`);
+      }
     } catch (error) {
-        console.error('Error during file download:', error);
-        alert('An error occurred while downloading the file.');
+      console.error('Error during file download:', error);
+      alert('An error occurred while downloading the file.');
     }
-};
-
+  };
 
   const handleSubmit = async () => {
-
-
     try {
-      // Get the token from localStorage (ensure it exists)
       const token = localStorage.getItem('StudentauthToken');
       if (!token) {
         alert('User is not authenticated. Please log in.');
@@ -137,35 +148,26 @@ const UploadPage = () => {
         return;
       }
 
-      if (!idNumber || !labNumber || !commonPassword) {
-        alert('Please fill in all fields.');
+      if (!commonPassword) {
+        alert('Please fill in the common password.');
         return;
       }
-    
-      // Prepare the form data
+
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('commonPassword',commonPassword);
+      formData.append('commonPassword', commonPassword);
 
-      // Prepare the payload
-
-
-      // Send the request to end the test
-      const response = await fetch('http://localhost:8080/api/end-test', {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/api/end-test`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,  // Add Bearer token to the headers
+          'Authorization': `Bearer ${token}`,
         },
-        body: formData
+        body: formData,
       });
 
       if (response.ok) {
-        // Clear the auth token from local storage
-        localStorage.removeItem('StudentauthToken');
-        
-
-        // Redirect to the end test page
-        router.push('/EndTestPage'); // Navigate to the end-test page
+        // localStorage.removeItem('StudentauthToken');
+        router.push('/EndTestPage');
       } else {
         const errorData = await response.json();
         alert(`Failed to end test: ${errorData.message}`);
@@ -176,104 +178,61 @@ const UploadPage = () => {
     }
   };
 
-  if(Loading)
-  {
-    return(
-      <>
-        <p>Loading....</p>
-      </>
-    );
+  if (Loading) {
+    return <p>Loading....</p>;
   }
 
   return (
     <>
-    <Navbar></Navbar>
-    <div className={styles.background}>
-    <div className={styles.container}>
-      <h2>Upload Test Material</h2>
-      <div className={styles.subContainer}>
-        <div className={styles.card}>
-          <form>
-            <label htmlFor="fileUpload">Upload File:</label>
-              <input
-                type="file"
-                id="fileUpload"
-                name="file"
-                accept=".zip,.rar"
-                onChange={handleFileChange}
-                required
-              />
-              
-              <div className={styles.uploadedFile}>
+      <Navbar />
+      <div className={styles.background}>
+        <div className={styles.container}>
+          <h2>Upload Test Material</h2>
+          <div className={styles.subContainer}>
+            <div className={styles.card}>
+              <form>
+                <label htmlFor="fileUpload">Upload File:</label>
+                <input
+                  type="file"
+                  id="fileUpload"
+                  name="file"
+                  accept=".zip,.rar"
+                  onChange={handleFileChange}
+                  required
+                />
+                <div className={styles.uploadedFile}>
                   <p>Uploaded File: {uploadedFileName}</p>
-                  <button
-                    type="button"
-                    onClick={handleUpload}  // Trigger the file upload
-                    className={styles.uploadButton}
-                  >
+                  <button type="button" onClick={handleUpload} className={styles.uploadButton}>
                     Upload
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleDownload}  // Trigger the file upload
-                    className={styles.uploadButton}
-                  >
+                  <button type="button" onClick={handleDownload} className={styles.uploadButton}>
                     Download Uploaded File
                   </button>
-              </div>
-          </form>
-        </div>
-        <div className={styles.card}>
-          <form>
-            <label htmlFor="idNumber">ID Number:</label>
-            <input
-              type="text"
-              id="idNumber"
-              name="idNumber"
-              value={idNumber}
-              onChange={(e) => setIdNumber(e.target.value)}
-              placeholder="Enter your ID Number"
-              required
-            />
-
-            <label htmlFor="labNumber">Lab Number:</label>
-            <input
-              type="text"
-              id="labNumber"
-              name="labNumber"
-              value={labNumber}
-              onChange={(e) => setLabNumber(e.target.value)}
-              placeholder="Enter your Lab Number"
-              required
-            />
-
-            <label htmlFor="commonPassword">Common Password:</label>
-            <input
-              type="password"
-              id="commonPassword"
-              name="commonPassword"
-              value={commonPassword}
-              onChange={(e) => {
-                setCommonPassword(e.target.value);
-                setIsPasswordValid(e.target.value.length > 0); // Assuming password length > 0 is valid
-              }}
-              placeholder="Enter the Common Password"
-              required
-            />
-
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className={styles.endTestButton}
-
-            >
-              End Test
-            </button>
-          </form>
+                </div>
+              </form>
+            </div>
+            <div className={styles.card}>
+              <form>
+                <label htmlFor="commonPassword">Common Password:</label>
+                <input
+                  type="password"
+                  id="commonPassword"
+                  name="commonPassword"
+                  value={commonPassword}
+                  onChange={(e) => {
+                    setCommonPassword(e.target.value);
+                  }}
+                  placeholder="Enter the Common Password"
+                  required
+                />
+                <button type="button" onClick={handleSubmit} className={styles.endTestButton}>
+                  End Test
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    </div>
     </>
   );
 };

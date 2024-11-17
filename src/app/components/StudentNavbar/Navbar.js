@@ -2,10 +2,9 @@
 import React from 'react';
 
 import styles from './navbar.module.css';
-import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
-    const router = useRouter(); // Initialize the router
+
 
 
 

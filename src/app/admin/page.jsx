@@ -31,7 +31,7 @@ const AdminLoginPage = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch('http://localhost:8080/admin/login', { // Replace with your actual backend URL
+      const res = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/login`, { // Replace with your actual backend URL
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -69,20 +69,20 @@ const AdminLoginPage = () => {
         <form onSubmit={handleLogin}>
           <div>
             <label>Username</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={username}
-              onChange={(e) => setUsername(e.target.value)} 
-              required 
+              onChange={(e) => setUsername(e.target.value)}
+              required
             />
           </div>
           <div>
             <label>Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
+              onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
           {error && <p style={{ color: 'red' }}>{error}</p>}

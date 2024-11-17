@@ -1,11 +1,9 @@
 // app/components/Navbar.js
 import React from 'react';
-import { useTestContext } from '../../context/TestContext'; // Make sure this path is correct
 import styles from './navbar.module.css';
 import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
-    const { testStarted } = useTestContext();
     const router = useRouter(); // Initialize the router
 
     const handleLogout = () => {

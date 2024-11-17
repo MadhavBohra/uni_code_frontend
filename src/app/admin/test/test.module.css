@@ -1,78 +1,196 @@
-.background{
+/* Background styling */
+.background {
     font-family: 'Arial', sans-serif;
     background: linear-gradient(120deg, #2980b9, #8e44ad);
-    height: 100vh;
-    width: 100%;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    padding-top: 2%; /* To adjust alignment */
 }
 
+/* Container styling */
 .container {
     width: 90%;
-    margin: 50px auto;
-    padding: 20px;
-    background-color: white;
+    max-width: 1200px; /* Restrict max-width for better layout on large screens */
+    margin: 2% auto;
+    padding: 30px;
+    background-color: #ffffff;
     border-radius: 10px;
-    height: 90%;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     overflow: auto;
-    margin-top: 6%;
+    max-height: 85vh;
 }
 
-/* For WebKit Browsers (Chrome, Safari, Edge) */
+/* Custom scrollbar styling */
 .container::-webkit-scrollbar {
-    width: 8px;  /* Width of the scrollbar */
+    width: 8px;
 }
 
 .container::-webkit-scrollbar-thumb {
-    background: #888;  /* Color of the scrollbar thumb */
-    border-radius: 10px;  /* Rounded corners */
+    background: #888;
+    border-radius: 10px;
 }
 
 .container::-webkit-scrollbar-thumb:hover {
-    background: #555;  /* Color when hovering */
+    background: #555;
 }
 
-/* For Firefox */
 .container {
-    scrollbar-width: thin;  /* Makes the scrollbar thinner */
-    scrollbar-color: #888 white;  /* Thumb color and track color */
+    scrollbar-width: thin;
+    scrollbar-color: #888 #ffffff;
 }
 
-/* Optional: for the hover effect in Firefox */
 .container:hover {
-    scrollbar-color: #555 white;  /* Change the thumb color on hover */
+    scrollbar-color: #555 #ffffff;
 }
+
+/* Header styling */
 .container h1 {
     text-align: center;
-    color: #333;
+    color: #333333;
+    margin-bottom: 20px;
+    font-size: 1.8em;
 }
+
+/* Table styling */
 .container table {
     width: 100%;
     border-collapse: collapse;
     margin: 20px 0;
+    font-size: 0.9em;
 }
-.container th,.container td {
+
+.container th,
+.container td {
     padding: 12px;
     text-align: left;
     border-bottom: 1px solid #ddd;
 }
+
 .container th {
     background-color: #007bff;
     color: white;
+    font-weight: bold;
 }
+
 .container tr:hover {
-    background-color: #f1f1f1;
+    background-color: #f9f9f9; /* Subtle color change for hover effect */
 }
+
+/* Button styling */
 .btn {
     display: inline-block;
     padding: 10px 20px;
     background-color: #007bff;
     color: white;
-    text-decoration: none;
+    text-align: center;
+    border: none;
     border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
+
 .btn:hover {
     background-color: #0056b3;
+}
+
+/* Additional styling for modal */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+.modal h2 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.modalInput {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+}
+
+.modalButtons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 15px;
+}
+
+.modalButtons .btn {
+    width: 45%;
+}
+
+/* Dropdown styling */
+.dropdown {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f8f8f8;
+    font-size: 1em;
+    color: #333;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-right: 15px; /* Adds space between dropdowns */
+}
+
+.dropdown:hover {
+    border-color: #007bff;
+    background-color: #f0f8ff; /* Light blue hover effect */
+}
+
+.dropdown:focus {
+    border-color: #0056b3;
+    box-shadow: 0 0 5px rgba(0, 91, 187, 0.5); /* Subtle blue shadow for focus */
+}
+
+/* "End Test" button styling */
+.endTestBtn {
+    padding: 10px 20px;
+    background-color: #e74c3c; /* Red color for emphasis */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.3s ease;
+}
+
+.endTestBtn:hover {
+    background-color: #c0392b; /* Darker red for hover effect */
+}
+
+.endTestBtn:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(192, 57, 43, 0.5); /* Red shadow for focus */
+}
+
+/* Align dropdowns and button neatly */
+.controlsContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
 }

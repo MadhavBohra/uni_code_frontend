@@ -3,100 +3,116 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./test.module.css";
 import Navbar from "@/app/components/AdminNavbar/Navbar";
-import { useTestContext } from "@/app/context/TestContext"; // Make sure this path is correct
+import { useTestContext } from "@/app/context/TestContext"; // Ensure this path is correct
 
 const TestPage = () => {
   const router = useRouter();
-  const { setTestStarted, testStarted } = useTestContext(); // Assuming testStarted is provided by context
+  const { setTestStarted, testStarted } = useTestContext();
+  const { setTestEnded, testEnded } = useTestContext();
   const [roomNumbers, setRoomNumbers] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("login-time");
-  const [studentData, setStudentData] = useState([]); // State to hold student data
+  const [studentData, setStudentData] = useState([]);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [showModal, setShowModal] = useState(false);
 
   const statusOptions = ["login-time", "download-time", "upload-time", "submit-time"];
 
   useEffect(() => {
-    // Check if the test has started
     if (!testStarted) {
-      // Redirect to the home page if the test has not started
-      router.push("/admin/home"); // Adjust the path as necessary
+      router.push("/admin/home");
+    }
+    if (testEnded) {
+      router.push("/admin/end")
     }
 
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+    const token = document.cookie.split("; ").find((row) => row.startsWith("token="))?.split("=")[1];
     if (!token) {
-      handleLogout(); // Log out if no token is found
+      handleLogout();
       return;
     }
 
-    // Fetch room numbers from the backend
-    fetch("http://localhost:8080/admin/room-numbers", {
+    fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/room-numbers`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token.split('=')[1]}` // Add the authorization header with the token
-      }
+        "Authorization": `Bearer ${token}`,
+      },
     })
       .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
       })
-      .then((data) => {
-        setRoomNumbers(data.rooms); // Assuming the API response is { rooms: [...] }
-      })
+      .then((data) => setRoomNumbers(data.rooms || []))
       .catch((err) => console.error("Error fetching room numbers:", err));
   }, [testStarted, router]);
 
   useEffect(() => {
-    // Function to fetch student data based on room selection and status
     const fetchStudentData = () => {
-      const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+      const token = document.cookie.split("; ").find((row) => row.startsWith("token="))?.split("=")[1];
       if (!token) return;
 
-      let apiUrl = `http://localhost:8080/admin/${selectedStatus}`;
-      if (selectedRoom) {
-        apiUrl += `/${selectedRoom}`; // Append room query if a room is selected
-      }
+      let apiUrl = `http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/${selectedStatus}`;
+      if (selectedRoom) apiUrl += `/${selectedRoom}`;
 
       fetch(apiUrl, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token.split('=')[1]}`
-        }
+          "Authorization": `Bearer ${token}`,
+        },
       })
         .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
           return res.json();
         })
-        .then((data) => {
-          setStudentData(data); // Assuming API returns { students: [...] }
-          console.log(data);
-        })
+        .then((data) => setStudentData(data || []))
         .catch((err) => console.error("Error fetching student data:", err));
     };
 
-    // Call fetchStudentData immediately and then every 30 seconds
-    fetchStudentData(); // Initial call
-
-    const interval = setInterval(() => {
-      fetchStudentData(); // Fetch every 30 seconds
-    }, 30000); // 30000 ms = 30 seconds
-
-    // Clean up the interval on component unmount
+    fetchStudentData();
+    const interval = setInterval(fetchStudentData, 30000);
     return () => clearInterval(interval);
+  }, [selectedRoom, selectedStatus]);
 
-  }, [selectedRoom, selectedStatus]); // Re-fetch data whenever room or status changes
+  const handleRoomChange = (e) => setSelectedRoom(e.target.value);
+  const handleStatusChange = (e) => setSelectedStatus(e.target.value);
 
-  const handleRoomChange = (e) => {
-    setSelectedRoom(e.target.value);
-  };
+  const handleEndTest = () => setShowModal(true);
 
-  const handleStatusChange = (e) => {
-    setSelectedStatus(e.target.value);
+  const handlePasswordSubmit = () => {
+    const pwd = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+    console.log(pwd);
+    if (adminPassword === pwd) {
+      // Extract the token from cookies
+      const token = document.cookie.split("; ").find((row) => row.startsWith("token="))?.split("=")[1];
+      if (!token) return;
+
+      // Define the API URL
+      const apiUrl = `http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/end-test`;
+
+      fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          setStudentData(data || []);
+          setTestStarted(false);
+          setTestEnded(true);
+          setShowModal(false);
+          router.push("/admin/end");
+        })
+        .catch((err) => console.error("Error fetching student data:", err));
+    } else {
+      alert("Incorrect password. Try again.");
+    }
   };
 
   return (
@@ -105,25 +121,21 @@ const TestPage = () => {
       <div className={styles.background}>
         <div className={styles.container}>
           <h1>Test Activity</h1>
-          {/* Dropdowns */}
-          <div className={styles.dropdownContainer}>
-            <label htmlFor="roomDropdown">Select Room:</label>
+
+          <div className={styles.controlsContainer}>
             <select
-              id="roomDropdown"
+              className={styles.dropdown}
               value={selectedRoom}
               onChange={handleRoomChange}
             >
               <option value="">All Rooms</option>
               {roomNumbers.map((room) => (
-                <option key={room} value={room}>
-                  Room {room}
-                </option>
+                <option key={room} value={room}>Room {room}</option>
               ))}
             </select>
 
-            <label htmlFor="statusDropdown">Select Status:</label>
             <select
-              id="statusDropdown"
+              className={styles.dropdown}
               value={selectedStatus}
               onChange={handleStatusChange}
             >
@@ -133,9 +145,35 @@ const TestPage = () => {
                 </option>
               ))}
             </select>
+
+            <button className={styles.endTestBtn} onClick={handleEndTest}>
+              End Test
+            </button>
           </div>
 
-          {/* Table */}
+          {showModal && (
+            <div className={styles.modalOverlay}>
+              <div className={styles.modal}>
+                <h2>Enter Admin Password</h2>
+                <input
+                  type="password"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  placeholder="Password"
+                  className={styles.modalInput}
+                />
+                <div className={styles.modalButtons}>
+                  <button className={styles.btn} onClick={handlePasswordSubmit}>
+                    Submit
+                  </button>
+                  <button className={styles.btn} onClick={() => setShowModal(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <table>
             <thead>
               <tr>
@@ -152,25 +190,17 @@ const TestPage = () => {
                     <td>{student.student_name}</td>
                     <td>{student.student_id}</td>
                     <td>
-                      {student.login_status ? (
-                        <span style={{ color: 'green' }}>&#10003;</span> // Green tick
+                      {student.status ? (
+                        <span style={{ color: "green" }}>&#10003;</span>
                       ) : (
-                        <span style={{ color: 'red' }}>&#10007;</span>   // Red cross
+                        <span style={{ color: "red" }}>&#10007;</span>
                       )}
                     </td>
-                    <td>
-                      {new Date(student.login_time).toLocaleTimeString('en-GB', { 
-                        hour: '2-digit', 
-                        minute: '2-digit', 
-                        second: '2-digit' 
-                      })}
-                    </td>
+                    <td>{student.time ? new Date(student.time).toLocaleTimeString() : "N/A"}</td>
                   </tr>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="4">No data available</td>
-                </tr>
+                <tr><td colSpan="4">No data available</td></tr>
               )}
             </tbody>
           </table>

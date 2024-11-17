@@ -6,16 +6,25 @@ import Navbar from '@/app/components/AdminNavbar/Navbar';
 import ConfirmationModal from '@/app/components/ConfirmationModal/ConfirmationModal';
 import { useTestContext } from '@/app/context/TestContext'; // Make sure this path is correct
 
+
 const AdminDashboard = () => {
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [questionPaper, setQuestionPaper] = useState(null);
   const [roomNumbers, setRoomNumbers] = useState([]);
-  const [newRoomNumber, setNewRoomNumber] = useState('');
+
   const [studentsList, setStudentsList] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { setTestStarted, testStarted } = useTestContext(); // Assuming testStarted is provided by context
+  const { setTestEnded } = useTestContext();
   const router = useRouter();
+
+  const handleLogout = () => {
+    // Clear token from cookies or any local storage if needed
+    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    // Redirect to login or home page
+    router.push('/admin'); // Adjust this path to where you want to redirect the user after logout
+  };
 
   const handleStartTest = async () => {
     try {
@@ -24,7 +33,7 @@ const AdminDashboard = () => {
         handleLogout(); // Log out if no token is found
         return;
       }
-      const response = await fetch('http://localhost:8080/admin/start-test', {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/start-test`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token.split('=')[1]}`, // Send token in the headers
@@ -63,7 +72,7 @@ const AdminDashboard = () => {
     formData.append('file', studentsList); // Append the students list file
 
     try {
-      const response = await fetch('http://localhost:8080/admin/upload-student-list', {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/upload-student-list`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token.split('=')[1]}`, // Send token in the headers
@@ -84,6 +93,98 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleQuestionPaperDownload = async () => {
+    try {
+      // Get the token from localStorage (ensure it exists)
+      const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+      if (!token) {
+        handleLogout(); // Log out if no token is found
+        return;
+      }
+
+      // Send the request with the Bearer token
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/download-question-paper`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.split('=')[1]}`,  // Add Bearer token to the headers
+        },
+      });
+
+      if (response.ok) {
+        // Create a blob from the response
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        // Create a link element
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'answer_file.zip'; // Set the desired file name here
+
+        // Append to the document and trigger the download
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up and remove the link
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        alert('File downloaded successfully.');
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to download file: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error('Error during file download:', error);
+      alert('An error occurred while downloading the file.');
+    }
+  }
+
+  const handleStudentListDownload = async () => {
+    try {
+      // Retrieve the token from the cookies
+      const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+      if (!token) {
+        handleLogout(); // Log out if no token is found
+        return;
+      }
+
+      // Send a GET request to download the student list
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/download-student-list`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.split('=')[1]}`,  // Add Bearer token to the headers
+        },
+      });
+
+      if (response.ok) {
+        // Create a blob from the response data
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        // Create a link element and set the download attributes
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'student_list.xlsx'; // Set the desired file name here
+
+        // Trigger the download by appending and clicking the link
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up the created URL and link element
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        alert('Student list downloaded successfully.');
+      } else {
+        // Parse and display the error message if the download fails
+        const errorData = await response.json();
+        alert(`Failed to download student list: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error('Error during file download:', error);
+      alert('An error occurred while downloading the student list.');
+    }
+  };
+
+
   useEffect(() => {
     const validateTokenAndFetchTestId = async () => {
       try {
@@ -93,7 +194,7 @@ const AdminDashboard = () => {
           throw new Error('No token found');
         }
 
-        const tokenRes = await fetch('http://localhost:8080/admin/is-token-valid', {
+        const tokenRes = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/is-token-valid`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token.split('=')[1]}`, // Extracting the token value
@@ -105,7 +206,7 @@ const AdminDashboard = () => {
         }
 
         // Fetch test ID
-        const testRes = await fetch('http://localhost:8080/admin/fetchTestSetup', {
+        const testRes = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/fetchTestSetup`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token.split('=')[1]}`,
@@ -120,8 +221,15 @@ const AdminDashboard = () => {
         console.log(testData.Status);
         if (testData.Status === "SETTING_UP") {
           setTestStarted(false);
+          setTestEnded(false);
         } else if (testData.Status === "ONGOING") {
           setTestStarted(true);
+          setTestEnded(false);
+        }
+        else if (testData.Status === "ENDED") {
+          setTestStarted(false);
+          setTestEnded(true);
+          router.replace("/admin/end");
         }
       } catch (error) {
         console.error(error);
@@ -140,6 +248,38 @@ const AdminDashboard = () => {
     }
   }, [testStarted, router]);
 
+  useEffect(() => {
+    // Fetch room numbers when the modal opens
+
+    const fetchRoomNumbers = async () => {
+      try {
+        const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+        if (!token) {
+          handleLogout(); // Log out if no token is found
+          return;
+        }
+        const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/room-numbers`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token.split('=')[1]}`,
+          },
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch room numbers');
+        }
+        const data = await response.json();
+        console.log(data);
+        setRoomNumbers(data.rooms); // Set room numbers from API response
+        console.log(roomNumbers);
+      } catch (error) {
+        console.error('Error fetching room numbers:', error);
+      }
+    };
+
+    if (showRoomModal) {
+      fetchRoomNumbers(); // Only fetch when the modal is opened
+    }
+  }, [showRoomModal]);
 
 
   const toggleRoomModal = () => {
@@ -168,7 +308,7 @@ const AdminDashboard = () => {
     formData.append('file', questionPaper); // Append the question paper file
 
     try {
-      const response = await fetch('http://localhost:8080/admin/upload-question-paper', {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/upload-question-paper`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token.split('=')[1]}`, // Send token in the headers
@@ -189,19 +329,8 @@ const AdminDashboard = () => {
     }
   };
 
-  const addRoomNumber = () => {
-    if (newRoomNumber.trim() === '') {
-      alert('Please enter a valid room number.');
-      return;
-    }
-    setRoomNumbers([...roomNumbers, newRoomNumber]);
-    setNewRoomNumber(''); // Clear input after adding
-  };
 
-  // Function to delete a room number
-  const deleteRoomNumber = (roomNumber) => {
-    setRoomNumbers(roomNumbers.filter((number) => number !== roomNumber));
-  };
+
 
 
   if (loading) {
@@ -226,19 +355,15 @@ const AdminDashboard = () => {
               <div className={styles.card}>
                 <h2>Upload Students List</h2>
                 <p>Upload an Excel file with the students appearing for the exam:</p>
-                <input 
-                  type="file" 
-                  onChange={handleStudentsListChange} 
+                <input
+                  type="file"
+                  onChange={handleStudentsListChange}
                   accept=".xlsx, .xls" // Specify accepted formats
-                  className={styles.fileInput} 
+                  className={styles.fileInput}
                 />
                 <button onClick={handleUploadStudentsList} className={styles.btn}>Upload Students List</button>
               </div>
-              <div className={styles.card}>
-                <h2>Add or Remove Lab Numbers</h2>
-                <p>Delete or Add lab numbers for the students:</p>
-                <button onClick={toggleRoomModal} className={styles.btn}>Manage Lab Numbers</button>
-              </div>
+
 
             </div>
 
@@ -251,11 +376,11 @@ const AdminDashboard = () => {
                 </div>
                 <div className={styles.detailRow}>
                   <p>See Test Paper: </p>
-                  <button className={styles.btn}>Open Test Paper</button>
+                  <button className={styles.btn} onClick={handleQuestionPaperDownload}>Open Test Paper</button>
                 </div>
                 <div className={styles.detailRow}>
                   <p>See Students List: </p>
-                  <button className={styles.btn}>Open Students List</button>
+                  <button className={styles.btn} onClick={handleStudentListDownload}>Open Students List</button>
                 </div>
                 <div className={styles.detailRow}>
                   <p>See Room/Lab Number:</p>
@@ -265,16 +390,16 @@ const AdminDashboard = () => {
               <div className={styles.card}>
                 <h2>Start Test</h2>
                 <p style={{ color: "red" }}>Once You Click on the Start Test there is NO GOING BACK:</p>
-                <button 
-                  className={styles.btn} 
-                  style={{ background: "red" }} 
+                <button
+                  className={styles.btn}
+                  style={{ background: "red" }}
                   onClick={() => setIsModalOpen(true)} // Open modal on click
                 >
                   START TEST
                 </button>
 
-                <ConfirmationModal 
-                  isOpen={isModalOpen} 
+                <ConfirmationModal
+                  isOpen={isModalOpen}
                   onClose={() => setIsModalOpen(false)} // Close modal
                   onConfirm={handleStartTest} // Confirm function
                 />
@@ -286,21 +411,18 @@ const AdminDashboard = () => {
 
       {/* Room Number Modal */}
       {showRoomModal && (
-              <div className={styles.modalOverlay}>
-                <div className={styles.modalContent}>
-                  <h2>Edit Room Numbers</h2>
-                  <input
-                    type="text"
-                    value={newRoomNumber}
-                    onChange={(e) => setNewRoomNumber(e.target.value)}
-                    placeholder="Enter new room number"
-                    className={styles.modalInput}
-                  />
-                  <button onClick={addRoomNumber} className={styles.btn}>Add Room Number</button>
-                  <button onClick={toggleRoomModal} className={styles.btn} style={{ background: 'red' }}>Close</button>
-                </div>
-              </div>
-            )}
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2>Room Numbers</h2>
+            <ul>
+              {roomNumbers.map((roomNumber, index) => (
+                <li key={index}>{roomNumber}</li>
+              ))}
+            </ul>
+            <button onClick={toggleRoomModal} className={styles.btn} style={{ background: 'red' }}>Close</button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

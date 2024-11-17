@@ -1,0 +1,74 @@
+/* General container styling */
+.container {
+
+    font-family: 'Arial', sans-serif;
+    margin: 100px auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    max-width: 90%;
+  }
+  
+  .container h1 {
+
+    text-align: center;
+    color: #333;
+  }
+  
+  /* Table styling */
+  .studentTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+  }
+  
+  .studentTable th, .studentTable td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .studentTable th {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .studentTable tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  /* Button container styling */
+  .buttonContainer {
+    display: flex;
+    justify-content: space-evenly;
+    margin-top: 20px;
+  }
+  
+  /* Action button styling */
+  .actionButton {
+    padding: 10px 20px;
+    font-size: 1em;
+    border-radius: 5px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .actionButton:hover {
+    opacity: 0.9;
+  }
+  
+  .actionButton:nth-child(1) {
+    background-color: #28a745; /* Green for download */
+  }
+  
+  .actionButton:nth-child(2) {
+    background-color: #e74c3c; /* Red for clear */
+  }
+  
+  .actionButton:nth-child(3) {
+    background-color: #007bff; /* Blue for start new */
+  }
+  

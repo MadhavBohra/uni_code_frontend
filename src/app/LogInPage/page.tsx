@@ -1,34 +1,51 @@
 "use client";
-
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // Import useRouter from next/navigation
+import { useRouter } from 'next/navigation';
 import styles from './LogInPage.module.css';
 
-const LogIn = () => {
+const LogIn: React.FC = () => {
   const [formData, setFormData] = useState({
     studentId: '',
     studentName: '',
     roomNumber: '',
     seatNumber: ''
   });
+  const [roomNumbers, setRoomNumbers] = useState<string[]>([]); // State to store room numbers
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const router = useRouter(); // Initialize the useRouter hook
+  const router = useRouter();
 
-  // Check if token exists on component mount
   useEffect(() => {
     const token = localStorage.getItem('StudentauthToken');
     if (token) {
-      // Redirect to download page if token is found
       router.push('/DownloadPage');
     } else {
-      setLoading(false); // If no token is found, stop loading
+      setLoading(false);
     }
   }, [router]);
 
-  // Handle change
+  useEffect(() => {
+    // Fetch room numbers from the API
+    const fetchRoomNumbers = async () => {
+      try {
+        const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/api/student-room-numbers`); // Replace with your API endpoint
+        if (!response.ok) {
+          throw new Error('Failed to fetch room numbers');
+        }
+        const data = await response.json();
+        setRoomNumbers(data.rooms); // Assuming API returns { roomNumbers: ["A101", "A102", ...] }
+      } catch (error) {
+        console.error('Error fetching room numbers:', error);
+        setRoomNumbers([]); // Set empty array in case of error
+      }
+    };
+
+    fetchRoomNumbers();
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
@@ -36,9 +53,9 @@ const LogIn = () => {
     });
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       const params = new URLSearchParams();
@@ -47,7 +64,7 @@ const LogIn = () => {
       params.append('roomNumber', formData.roomNumber);
       params.append('seatNumber', formData.seatNumber);
 
-      const response = await fetch('http://localhost:8080/api/login', {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -56,21 +73,17 @@ const LogIn = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Login failed');
+        const data = await response.json();
+        console.error('Login error:', data.error);
+        throw new Error(data.error);
       }
 
       const data = await response.json();
 
-      // Check if the token is present in the response
       if (data.token) {
-        // Save token to localStorage
         localStorage.setItem('StudentauthToken', data.token);
-
-        // Display success message
         setSuccessMessage('Login successful!');
         setErrorMessage('');
-
-        // Redirect the user to the download question paper page using useRouter
         router.push('/DownloadPage');
       } else {
         throw new Error('No token found');
@@ -78,21 +91,20 @@ const LogIn = () => {
     } catch (error) {
       setErrorMessage('Login failed. Please try again.');
       setSuccessMessage('');
+      alert(`Login failed with error: ${error}`);
       console.error('Login error:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  if(loading)
-  {
-    return(
-      <>
-        <p>Loading....</p>
-      </>
-    )
+  if (loading) {
+    return <p>Loading....</p>;
   }
-  
+
   return (
     <div className={styles.background}>
+      {isSubmitting && <div className={styles.loadingOverlay}>Processing...</div>}
       <div className={styles.container}>
         <h2>Login</h2>
 
@@ -128,10 +140,11 @@ const LogIn = () => {
             required
           >
             <option value="">Select your Room</option>
-            <option value="A101">A101</option>
-            <option value="A102">A102</option>
-            <option value="B201">B201</option>
-            <option value="B202">B202</option>
+            {roomNumbers.map((room) => (
+              <option key={room} value={room}>
+                {room}
+              </option>
+            ))}
           </select>
 
           <label htmlFor="seatNumber">Seat Number:</label>
@@ -145,7 +158,7 @@ const LogIn = () => {
             required
           />
 
-          <button type="submit">Log In</button>
+          <button type="submit" disabled={isSubmitting}>Log In</button>
         </form>
 
         {successMessage && <div className={styles.messageSuccess}>{successMessage}</div>}

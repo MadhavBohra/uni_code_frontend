@@ -7,7 +7,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (password === 'yourAdminPassword') { // Replace with your actual password check
+    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) { // Replace with your actual password check
       onConfirm(); // Call the onConfirm function to start the test
       onClose(); // Close the modal
     } else {
